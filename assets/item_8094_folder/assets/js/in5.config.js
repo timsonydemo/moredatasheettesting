@@ -30,8 +30,8 @@ var prefix = (function () {
   return { dom: dom, lowercase: pre, css: '-' + pre + '-', js: pre[0].toUpperCase() + pre.substr(1)};
 })();
 var pre = (document.createElement('div').style['WebkitTransform'] != undefined) ? '-webkit-' : '';
-var useSwipe = true;
-var pageMode = 'fade';
+var useSwipe = false;
+var pageMode = 'csvb';
 var pageW = 1366, pageH = 768;
 var multifile = false;
 if(multifile) { 
@@ -39,12 +39,12 @@ if(multifile) {
 	if(pageMode[0] == 'f') $('html').addClass('fade');
 }		
 var isLiquid = (pageMode.indexOf('liquid') != -1), flip = (pageMode.indexOf('flip') != -1) && !multifile;
-var arrowNav = true;
-var lazyLoad = true;
+var arrowNav = false;
+var lazyLoad = false;
 var scaleMode = 'width_all';
 var webAppType = '';
 var useTracker = false;
-var shareInfo = {btns:["twitter", "facebook", "linkedin"], align:"right"};
+var shareInfo = {btns:[], align:"right"};
 var maxScaleWidth, maxScaleHeight;
 var webAppEmailSubject = 'Check out this Web App for {deviceName}';
 var webAppEmailBody = 'Add this Web App to Your {deviceName} by visiting: ';
@@ -57,7 +57,7 @@ var sliderSettings = {}, nav = {}, in5 = {layouts:[
  		"name": "1366 x 768 H",
  		"class": "mq-1366 mq-default",
  		"width": 1366,
- 		"height": 3072,
+ 		"height": 768,
  		"default": true,
  		"trigger": "default",
  		"index": 0
@@ -66,13 +66,13 @@ var sliderSettings = {}, nav = {}, in5 = {layouts:[
  		"name": "mobile phone V",
  		"class": "mq-414",
  		"width": 414,
- 		"height": 2000,
+ 		"height": 896,
  		"default": false,
  		"trigger": 544,
  		"index": 1
  	}
  ]},
-viewOpts = ({title:0, page:1, zoom:0, fs:1, pdf:"assets/downloads/Sony_Kramer_Datasheet2020v6a_TB%20comments.pdf", toc:1, thumbs:1, progress:0, showbar:1, logo:"assets/images/frame-logo.png", bg:"#000", loadText:"please wait, removing watermelon seeds...", footer:0});
+viewOpts = ({title:0, page:0, zoom:0, fs:0, pdf:0, toc:0, thumbs:0, progress:0, bg:"#000", loadText:"loading content...", footer:0});
 var uAgent = navigator.userAgent.toLowerCase();
 var isIOS = ((/iPad|iPhone|iPod/.test(navigator.platform) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream), 
 	isIPad = uAgent.indexOf("ipad") > -1 || (isIOS && window.devicePixelRatio < 3), isIPhone = uAgent.indexOf("iphone") > -1 || (isIOS && window.devicePixelRatio > 2),
@@ -1012,7 +1012,7 @@ function getOrientation() {
 }
 
 function addNavProps(){
-	if(nav.numPages === undefined) nav.numPages=3;
+	if(nav.numPages === undefined) nav.numPages=1;
 	nav.rtl = $('#slider').attr('data-dir') == 'rtl';
 	if(nav.rtl) $('html').attr('data-dir', 'rtl');
 	nav.init = function() { setTimeout(function(){nav.to(getStartPage());},1); };
@@ -1165,61 +1165,6 @@ $(window).on('docReady', function(e){
 	window.loaded=!0;
 	$('body').addClass('loaded');
 	if(flip){ $sl.turn("disable",!1); }
-		var overrideSettings = sliderSettings;
-	sliderSettings = {
-		playRtl: $('html').attr('data-dir') === 'rtl',
-		mode:$('.page-scale-wrap[data-transitions]').length ? 'fade' : pageMode, theme:'in5',
-		autoPlayLocked:!0, buildArrows:!1, buildNavigation:!1,
-		resizeContents:!1, buildStartStop:!1,
-		hashTags:!1, infiniteSlides:!1,
-		enableKeyboard:(!window.presmode||!window.presmode.enabled||!window.presmode.keynav),
-		stopAtEnd:true, resumeOnVisible:!1, startPanel:getStartPage(),
-		onSlideBegin:function(e,slider){
-			slider.navChange=!0;
-			clearLastPage(slider.$lastPage);
-			clearAnimation(slider.$targetPage);
-			$('html').addClass('nav-transition'),nav.update(slider.$targetPage.index()+1);
-		},
-		onSlideComplete:function(slider){
-			$('html').removeClass('nav-transition');
-			$(document).trigger('newPage', {index:slider.currentPage-1,slider:slider});
-			if(slider.$lastPage){ clearAnimation(slider.$lastPage); }
-			$('.fade .page').not('.fade .page.activePage').hide();/*fix for ipad*/
-			slider.navChange=!1;},
-		onInitialized:function(e, slider) {
-			updateCurrentLayout();
-			$('.fade .page').not('.fade .page.activePage').hide();
-			$(document).trigger('newPage', {index:(slider.targetPage)?slider.targetPage-1:0});
-			var navOpts = {
-				numPages:slider.pages,
-				previousPageIndex:nav?nav.previousPageIndex:undefined,
-				current:slider.currentPage,
-				next:function(){slider.goForward();},
-				back:function(){slider.goBack();},
-				first:function(){this.to(1);},
-				last:function(){this.to(this.numPages);},
-				to:function(n,c,q){
-					$(document).trigger('beforeNewPage', {'newPageIndex':n});
-					if((c||q) && $('body').attr('data-scaled-to') !== 'h'){
-						var offset = !c ? $(q).offset() : $('#slider').offset(), cScale = getCurrentScale($('#container'));
-						if(!c){ c=[0,0]; }
-						slider.scrollAdjust = (pageMode=='h' || pageMode=='fade') ? function(){ $(document).scrollTop(offset.top+c[1]*cScale);} : function(){$(document).scrollLeft(offset.left+c[0]*cScale);};
-					} else slider.scrollAdjust = undefined;
-					if(n == slider.currentPage && slider.scrollAdjust){
-						slider.scrollAdjust();
-						delete slider.scrollAdjust;
-					} else { slider.gotoPage(n);  n==nav.current && $(document).trigger('newPage', {index:n-1}); }
-				}
-			};
-			nav = (nav) ? $.extend(!0,{},nav,navOpts) : nav;
-		}
-	};
-	for(var prop in overrideSettings){ sliderSettings[prop] = overrideSettings[prop]; }
-	var $slider = $('#slider');
-	$slider.anythingSlider(sliderSettings);
-	var api = $slider.data('AnythingSlider');
-	if(sliderSettings.hashTags && !sliderSettings.disableBrowserNav){ $(window).on('hashchange', function(e){ if(!api.navChange) { nav.to(api.gotoHash()); } }); }		
-	sliderSettings.useSlider=!0;
 	
 	initMedia(sliderSettings != undefined);
 	if(multifile) { return; }
@@ -1473,49 +1418,5 @@ $.fn.redraw = function(){
 	});
 };
 
-$(function(){
-	if(!shareInfo.btns || !shareInfo.btns.length) return;
-	var i=shareInfo.btns.length,refURL=escape(''||location.href), 
-	refName=escape(document.title), arr=[];
-	while(i--) {
-		switch(shareInfo.btns[i]){
-			case 'facebook': arr.push('<a id="sb-fb" href="https://www.facebook.com/sharer/sharer.php?u='+refURL+'" target="_blank" alt="Share on Facebook" title="Share on Facebook"><span>facebook</span></a>'); break;
-			case 'twitter': arr.push('<a id="sb-tw" href="https://twitter.com/intent/tweet?text=Check%20out%20'+refName+'%0A&url='+refURL+'" target="_blank" alt="Share on Twitter" title="Share on Twitter"><span>twitter</span></a>'); break;
-			case 'linkedin': arr.push('<a id="sb-li" href="https://www.linkedin.com/shareArticle?mini=true&url='+refURL+'&title=Check%20out%20'+refName+'&summary=Check%20out%20'+refURL+'&source='+refURL+'" target="_blank" alt="Share on Linkedin" title="Share on Linkedin"><span>linkedin</span></a>'); break;
-			case 'gplus': arr.push('<a id="sb-gp" href="https://plus.google.com/share?url='+refURL+'" target="_blank" alt="Share on Google+" title="Share on Google+"><span>google+</span></a>'); break;
-		}
-	}
-	$('body').append('<div id="share-wrap" class="align-'+shareInfo.align+'">\r'+arr.reverse().join('\r')+'\r</div>');
-	$('#share-wrap > a').on('click',function(e){
-		if(useTracker && trackButtons && _gat) _gat('send', 'social', {'socialNetwork':$(this).text(), 'socialAction':'share', 'socialTarget':location.href});
-		window.open(this.href,'Share', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=600,width=600');
-		return !1;
-	});
-});
 
-$(function(){
-	if(!flip) {
-		$('.in5-parallax-bg-img').each(function(i,el){
-			var $el = $(el);
-			$el.parents('.page-scale-wrap').find('.pageItem').css('will-change','transform');
-			if($el.attr('data-noscale')=='1'){el.noScale=!0;}
-			el.updateParallaxBG = function(sc){
-				if(this.offsetParent === null) return;
-				var b=$el.parent()[0].getBoundingClientRect(), scale=sc || getCurrentScale($('#container'));
-				if(b.bottom < 0 || b.right < 0 || b.y > window.innerHeight || b.x > window.innerWidth) return;
-				if(el.noScale){
-					$el.css('transform', 'translateY('+(window.scrollY/scale)+'px) translateX('+(window.scrollX/scale)+'px)');
-				} else { 
-					$el.css('transform', 'translateY('+(b.y*-1/scale)+'px) translateX('+(b.x*-1/scale)+'px)');
-					$el.css('width',window.innerWidth/scale+'px').css('height',window.innerHeight/scale+'px'); 
-				}
-			};
-		});
-		$(window).on('load resize scroll orientationchange',function(){
-			(function(scale){
-			$('.in5-parallax-bg-img').each(function(i,el){ el.updateParallaxBG(scale); });
-			})(getCurrentScale($('#container')));
-		});
-	}
-});
 
